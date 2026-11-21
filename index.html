@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f7f6">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon shortcut" href="images/favicon.png">
+    <title>Mano Simulator</title>
+    <script src="app.js" defer></script>
+    <script src="draw_tables.js" defer></script>
+    <script src="instructions.js" defer></script>
+</head>
+
+<body>
+    <div class="box-shadow"></div>
+    <main class="container">
+        <section class="panel editor" aria-labelledby="editor-header">
+            <div class="panel-heading">
+                <h2 id="editor-header">Code Editor</h2>
+                <button class="reset-button" id="resetBtn" type="button">Reset</button>
+            </div>
+            <label class="sr-only" for="editor">MANO assembly code</label>
+            <textarea name="editor" id="editor" rows="26" spellcheck="false" autocomplete="off" placeholder="ORG 100&#10;LDA X&#10;HLT&#10;X, DEC 1&#10;END"></textarea>
+            <button class="button primary-button" id="assemblerBtn" type="button">
+                <img src="images/processing.png" alt="" width="20" height="20" aria-hidden="true">
+                Assemble
+            </button>
+        </section>
+
+        <section class="instruction-table__container" aria-labelledby="instruction-header">
+            <div class="panel instruction-table">
+                <div class="panel-heading">
+                    <h2 id="instruction-header">Instruction Detail</h2>
+                    <span id="show-steps" class="status-badge" aria-live="polite">Ready</span>
+                </div>
+            </div>
+            <div class="controlUintButtons" aria-label="Execution controls">
+                <button class="button cycle-button" id="fetchBtn" type="button" disabled><img src="images/automation.png" alt="" width="20" height="20" aria-hidden="true"><span>Fetch</span></button>
+                <button class="button cycle-button" id="decodeBtn" type="button" disabled><img src="images/decode.png" alt="" width="20" height="20" aria-hidden="true"><span>Decode</span></button>
+                <button class="button cycle-button" id="executeBtn" type="button" disabled><img src="images/execution.png" alt="" width="20" height="20" aria-hidden="true"><span>Execute</span></button>
+            </div>
+            <div class="show-instruction" aria-live="polite">
+                <span class="activity-label">Current instruction</span>
+                <strong id="current-instruction">None</strong>
+                <p id="update_memory_alarm">Content <span id="content_memory"></span> added to address <span id="current_address"></span></p>
+            </div>
+            <div class="instruction-info">
+                <div id="endProgram_notif" class="box-modal show-box">
+                    <div>
+                        <p>End of Program</p>
+                        <p>Reset to test another example.</p>
+                    </div>
+                    <button class="close-errorsBtn" id="endprogramBtn" type="button">OK</button>
+                </div>
+                <div class="box-modal errors">
+                    <p id="error-line">Editor is Empty</p>
+                    <button class="close-errorsBtn" id="emptyBtn" type="button">OK</button>
+                </div>
+                <div class="box-modal" id="errorLine_container">
+                    <p>Invalid instruction at address <span id="error_line"></span>.</p>
+                    <button class="close-errorsBtn" id="errorLineBtn" type="button">OK</button>
+                </div>
+                <div class="box-modal" id="assembled_successfully_container">
+                    <p>Program assembled successfully.</p>
+                    <button class="close-errorsBtn" id="assembled_successfully_Btn" type="button">OK</button>
+                </div>
+            </div>
+        </section>
+        <section class="panel memory-table" aria-labelledby="memory-header">
+            <div class="panel-heading">
+                <h2 id="memory-header" class="text-center">Memory Table</h2>
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
