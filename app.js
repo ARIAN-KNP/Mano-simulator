@@ -164,7 +164,7 @@ function scanEveryLine_second() {
         !ith_line.includes("DEC")) {
         let target = results_contents[1];
 
-        if (search_in_object(memory_instructions, target)) {
+        if (Object.prototype.hasOwnProperty.call(memory_instructions, target)) {
             let opcode; //x
             if (results_contents.includes('I')) {
                 opcode = memory_instructions[target][1]; //x
@@ -195,7 +195,7 @@ function scanEveryLine_second() {
     } else {
         // if it is memory refrence:
         let target = results_contents[0];
-        if (search_in_object(memory_instructions, target)) {
+        if (Object.prototype.hasOwnProperty.call(memory_instructions, target)) {
             if (!search_in_object(labels_table, results_contents[1])) {
                 errorLine_container.style.display = 'flex';
                 boxShadow.classList.add('show');
@@ -243,20 +243,15 @@ function scanEveryLine_second() {
 }
 
 function search_in_object(object, target) {
-    for (let i = 0; i < Object.keys(object).length; i++) {
-        if (object[target]) {
-            return object[target];
-        }
-    }
-    return 0;
+    return Object.prototype.hasOwnProperty.call(object, target) ? object[target] : 0;
 }
 
 function DecToHex(decimal) { // Data (decimal)
 
-    length = -1; // Base string length
-    string = ''; // Source 'string'
+    let length = -1; // Base string length
+    let string = ''; // Source 'string'
 
-    characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']; // character array
+    const characters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']; // character array
 
     do { // Grab each nibble in reverse order because JavaScript has no unsigned left shift
 
@@ -339,12 +334,15 @@ const close_empty_error = document.getElementById('emptyBtn');
 
 function start_assemble() {
     const strings = document.getElementById("editor").value;
-    if (strings == "") {
+    if (strings.trim() == "") {
         errors_div.style.display = 'flex';
         boxShadow.classList.add('show');
     } else {
         editor_contents = strings;
-        results = editor_contents.split("\n");
+        results = editor_contents
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line !== '');
         firstStep();
         secondStep();
         if (errorLine.innerText == '') {

@@ -2,6 +2,7 @@
 const row_items = ['Elements', 'Initial Values', 'T0: AR <- PC', 'T1: IR <- M[AR], PC <-PC+1', 'T2: AR <- IR[0:11]', 'T3', 'T4', 'T5', 'T6', 'After Execution'];
 const column_items = ['statements', 'IR', 'AC', 'DR', 'PC', 'AR', 'M[AR]', 'E'];
 const inst_table = document.createElement('table');
+inst_table.setAttribute('aria-label', 'Instruction execution registers');
 const inst_table_container = document.querySelector('.instruction-table');
 for (let i = 0; i < 10; i++) {
     let row = document.createElement('tr');
@@ -28,18 +29,21 @@ inst_table_container.appendChild(inst_table);
 
 // create a memory table
 const memoryTable = document.createElement('table');
+memoryTable.setAttribute('aria-label', 'MANO memory contents');
 const memoryTable__container = document.querySelector('.memory-table');
 for (let i = -1; i < 4097; i++) {
     let row = document.createElement('tr');
-    for (let j = 0; j < 3; j++) {
+    for (let j = 0; j < 4; j++) {
         let column = document.createElement('td');
         if (i == -1) {
             if (j == 0) {
-                column.innerText = 'Decimal Addrress';
+                column.innerText = 'Decimal Address';
             } else if (j == 1) {
-                column.innerText = 'Hex Addrress';
+                column.innerText = 'Hex Address';
             } else if (j == 2) {
-                column.innerText = 'Contents';
+                column.innerText = 'Hex Contents';
+            } else if (j == 3) {
+                column.innerText = 'Decimal Contents';
             }
             column.classList.add('bold-text');
             row.classList.add('sticky-header');
@@ -61,10 +65,20 @@ const table = document.querySelector('.memory-table table');
 const rows = table.getElementsByTagName('tr');
 const columns = table.getElementsByTagName('td');
 
+function hexContentToDecimal(hexContent) {
+    if (typeof hexContent !== 'string' || hexContent.trim() === '') {
+        return '';
+    }
+    const decimalContent = parseInt(hexContent.replace(/^0x/i, '').trim(), 16);
+    return Number.isNaN(decimalContent) ? '' : decimalContent.toString();
+}
+
 function updateContentsColumn() {
     let counter = startAddress;
     for (let i = parseInt('0x' + startAddress) + 1; i < parseInt('0x' + startAddress) + numberOfAddress + 1; i++) {
-        columns[i * 3 + 2].innerText = memory_table_contents[counter];
+        const hexContent = memory_table_contents[counter];
+        columns[i * 4 + 2].innerText = hexContent || '';
+        columns[i * 4 + 3].innerText = hexContentToDecimal(hexContent);
         counter = addHexNumbers(counter, '1');
     }
     scrollToRow(parseInt('0x' + startAddress) + 1);
@@ -72,8 +86,11 @@ function updateContentsColumn() {
 
 function update_memory_table(address) {
     let index = parseInt('0x' + address) + 1;
-    columns[index * 3 + 2].innerText = writeHexNum(memory_table_contents[address]);
-    columns[index * 3 + 2].classList.add('appear-content');
+    const hexContent = writeHexNum(memory_table_contents[address]);
+    columns[index * 4 + 2].innerText = hexContent;
+    columns[index * 4 + 3].innerText = hexContentToDecimal(hexContent);
+    columns[index * 4 + 2].classList.add('appear-content');
+    columns[index * 4 + 3].classList.add('appear-content');
 }
 
 function scrollToRow(number) {

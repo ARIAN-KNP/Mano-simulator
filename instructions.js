@@ -35,8 +35,8 @@ function fetch_instruction() {
     updateInstructionTable('initial')
     instr_values["PC"] = '0x' + binaryToHex(PC);
     AR = PC; // T0
-    let data = memory_table_contents['0' + parseInt(AR, 2).toString(16).toUpperCase()];
-    instr_values['Memory'] = '0x' + data ? '0x' + data : '0x' + 0;
+    let data = memory_table_contents[memoryAddress(AR)] || '0000';
+    instr_values['Memory'] = '0x' + data;
 
     instr_values["AR"] = '0x' + binaryToHex(AR);
     updateInstructionTable('T0');
@@ -62,7 +62,7 @@ function decode_instruction() {
     AR = IR.substr(4, 16); //12 bit address
     operation_code = AR.indexOf('1');
     instr_values["AR"] = '0x' + binaryToHex(AR);
-    let data = memory_table_contents['0' + parseInt(AR, 2).toString(16)];
+    let data = memory_table_contents[memoryAddress(AR)] || '0000';
     instr_values['Memory'] = data ? '0x' + data : '0x' + 0;
     updateInstructionTable('T2');
     disableBtn(decodeBtn);
@@ -91,7 +91,6 @@ function execute_instruction() {
             } else if (operation == 10) {
                 current_instruction.innerText = 'SZE';
                 if (E == 0) {
-                    console.log('if E was zero: jump', E, typeof(E));
                     PC = addBinary(PC, '1', 12);
                     instr_values['PC'] = '0x' + binaryToHex(PC);
                     inst_columns[40].innerText = 'T3: PC <- PC+1';
@@ -182,7 +181,7 @@ function execute_instruction() {
                 }
             } else if (operation == 2) {
                 current_instruction.innerText = 'SKI';
-                if (FGI == 0) {
+                if (FGI == 1) {
                     PC = addBinary(PC, '1', 12); // skip next instruction
                 }
             } else if (operation == 1) {
@@ -198,14 +197,14 @@ function execute_instruction() {
         }
     } else { //memory ref
         if (I == 1) {
-            let data = memory_table_contents['0' + parseInt(AR, 2).toString(16).toUpperCase()];
+            let data = memory_table_contents[memoryAddress(AR)] || '0000';
             AR = isNegative(data) ? hexToBinary_signed(data, 16) : hexToBinary(data, 16);
             instr_values['AR'] = '0x' + data;
-            instr_values['Memory'] = '0x' + memory_table_contents['0' + data];
+            instr_values['Memory'] = '0x' + (memory_table_contents[memoryAddress(AR)] || '0000');
         }
         if (opcode == 0) {
             current_instruction.innerText = 'AND';
-            let data = memory_table_contents['0' + parseInt(AR, 2).toString(16).toUpperCase()];
+            let data = memory_table_contents[memoryAddress(AR)] || '0000';
             DR = isNegative(data) ? hexToBinary_signed(data, 16) : hexToBinary(data, 16);
             instr_values['DR'] = '0x' + binaryToHex(DR);
             updateInstructionTable('T4');
@@ -216,7 +215,7 @@ function execute_instruction() {
             inst_columns[56].innerText = 'T5: AC<-AC ^ DR, SC<-0';
         } else if (opcode == 1) {
             current_instruction.innerText = 'ADD';
-            let data = memory_table_contents['0' + parseInt(AR, 2).toString(16).toUpperCase()];
+            let data = memory_table_contents[memoryAddress(AR)] || '0000';
             DR = isNegative(data) ? hexToBinary_signed(data, 16) : hexToBinary(data, 16);
             instr_values['DR'] = '0x' + binaryToHex(DR);
             inst_columns[48].innerText = 'T4: DR<-M[AR]';
@@ -233,7 +232,7 @@ function execute_instruction() {
             updateInstructionTable('T5');
         } else if (opcode == 2) {
             current_instruction.innerText = 'LDA';
-            let data = memory_table_contents['0' + parseInt(AR, 2).toString(16).toUpperCase()];
+            let data = memory_table_contents[memoryAddress(AR)] || '0000';
             DR = isNegative(data) ? hexToBinary_signed(data, 16) : hexToBinary(data, 16);
             instr_values['DR'] = '0x' + binaryToHex(DR);
             inst_columns[48].innerText = 'T4: DR<-M[AR]';
@@ -244,7 +243,7 @@ function execute_instruction() {
             updateInstructionTable('T5');
         } else if (opcode == 3) {
             current_instruction.innerText = 'STA';
-            let address = '0' + parseInt(AR, 2).toString(16).toUpperCase();
+            let address = memoryAddress(AR);
             memory_table_contents[address] = binaryToHex(AC); //T4 convert address to content
             update_memory_table(address);
             content_memory_span.innerText = memory_table_contents[address];
@@ -264,7 +263,7 @@ function execute_instruction() {
             updateInstructionTable('T4');
         } else if (opcode == 5) {
             current_instruction.innerText = 'BSA';
-            let address = '0' + parseInt(AR, 2).toString(16).toUpperCase();
+            let address = memoryAddress(AR);
             memory_table_contents[address] = binaryToHex(PC); //T4 ????? convert address to content
             update_memory_table(address);
             content_memory_span.innerText = memory_table_contents[address];
@@ -284,8 +283,8 @@ function execute_instruction() {
             updateInstructionTable('T5');
         } else if (opcode == 6) {
             current_instruction.innerText = 'ISZ';
-            let address = '0' + parseInt(AR, 2).toString(16).toUpperCase();
-            let data = memory_table_contents[address];
+            let address = memoryAddress(AR);
+            let data = memory_table_contents[address] || '0000';
             DR = isNegative(data) ? hexToBinary_signed(data, 16) : hexToBinary(data, 16);
             instr_values['DR'] = '0x' + binaryToHex(DR);
             inst_columns[48].innerText = 'T4: DR<-M[AR]';
@@ -310,7 +309,7 @@ function execute_instruction() {
             data = memory_table_contents[address];
             instr_values['Memory'] = '0x' + data;
             inst_columns[64].innerText = 'T6: M[AR]<-DR,SC<-0';
-            if (DR == 0) {
+            if (DR === '0000000000000000') {
                 PC = addBinary(PC, '1', 12); //T6
                 instr_values['PC'] = '0x' + binaryToHex(PC);
                 inst_columns[64].innerText = 'T6: M[AR]<-DR,PC<-PC+1,SC<-0';
@@ -335,6 +334,10 @@ function contentToAddress(content) {
     return bit1 + address;
 }
 
+function memoryAddress(binaryAddress) {
+    return parseInt(binaryAddress, 2).toString(16).toUpperCase().padStart(4, '0');
+}
+
 function and(a, b) { return a == 1 && b == 1 ? 1 : 0; }
 
 function andTwoNumbers(num1, num2) {
@@ -345,6 +348,7 @@ function andTwoNumbers(num1, num2) {
     return result;
 }
 const addBinary = (str1, str2, size) => {
+    Cout = 0;
     let carry = 0;
     const res = [];
     let l1 = str1.length;
@@ -360,13 +364,7 @@ const addBinary = (str1, str2, size) => {
         Cout = 1;
 
     }
-    if (res.length > size) {
-        console.log('******res.length in addbinary******', res.length);
-        return res.reverse().splice(res.length - size).join('');
-    } else {
-        console.log('********else of add binary****** res: ', res);
-        return res.reverse().join('');
-    }
+    return res.reverse().join('').padStart(size, '0').slice(-size);
 };
 
 
@@ -416,25 +414,9 @@ function hexToBinary(number, size_number) {
 }
 
 function hexToBinary_signed(hex_number, size_number) {
-    let answer = hexToBinary(hex_number);
-    let finalAns;
-    let zero_added = '';
-    if (answer[0] == '-') { //if negative number
-        answer = answer.substr(1, answer.length - 1);
-        if (answer.length < size_number) {
-            for (let i = 0; i < size_number - answer.length; i++) {
-                zero_added += '0';
-            }
-            answer = zero_added + answer; //'00000001010101' ex
-            finalAns = complementOne(answer);
-            finalAns = addBinary(finalAns, '1');
-            console.log('final answer in hextobinary_signed func: ', finalAns);
-            return finalAns;
-        } else {
-            console.log('in negative hextobinary func: answer: ', answer);
-        }
-        console.log('in negative hextobinary func: answer: ', answer);
-    }
+    const signedBinary = hexToBinary(hex_number);
+    const magnitude = signedBinary.replace('-', '').padStart(size_number, '0');
+    return addBinary(complementOne(magnitude), '1', size_number);
 }
 
 function isNegative(data) {
